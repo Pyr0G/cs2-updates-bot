@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+settings.local.json
+HANDOFF.md
+.codex/
+.agents/
+data/
+preview.json
+node_modules/
+*.log

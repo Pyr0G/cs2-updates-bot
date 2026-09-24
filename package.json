@@ -1,0 +1,13 @@
+{
+  "name": "counter-strike-2-updates",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/main.js run",
+    "preview": "node --env-file-if-exists=.env src/main.js preview",
+    "check": "node --env-file-if-exists=.env src/main.js check",
+    "test": "node --test"
+  }
+}
