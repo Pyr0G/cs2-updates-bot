@@ -5,7 +5,10 @@ if (Test-Path -LiteralPath '.env') {
 }
 $localDefaults = @{}
 if (Test-Path -LiteralPath 'settings.local.json') {
-    $localDefaults = Get-Content -LiteralPath 'settings.local.json' -Raw | ConvertFrom-Json -AsHashtable
+    $savedDefaults = Get-Content -LiteralPath 'settings.local.json' -Raw | ConvertFrom-Json
+    foreach ($property in $savedDefaults.PSObject.Properties) {
+        $localDefaults[$property.Name] = $property.Value
+    }
 }
 $configuration = @{}
 foreach ($settingName in @('DISCORD_APPLICATION_ID', 'DISCORD_GUILD_ID', 'DISCORD_CHANNEL_ID', 'DISCORD_ROLE_ID')) {

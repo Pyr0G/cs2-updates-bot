@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('preview', 'check', 'run', 'send-preview', 'test', 'resolve-sent', 'resolve-retry')]
+    [ValidateSet('preview', 'check', 'run', 'test', 'resolve-sent', 'resolve-retry')]
     [string]$Action = 'preview',
     [string]$AnnouncementId
 )

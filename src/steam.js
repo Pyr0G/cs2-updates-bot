@@ -70,7 +70,7 @@ export async function articleDetails(item, fetcher = fetch) {
 
 export function buildMessage(item, details, roleId, ping = true) {
   return {
-    content: ping ? `<@&${roleId}>` : 'Preview — notifications disabled',
+    content: ping ? `<@&${roleId}>` : '',
     allowed_mentions: { parse: [], roles: ping ? [roleId] : [], users: [], replied_user: false },
     nonce: ping ? item.gid : `p${item.gid}`,
     enforce_nonce: true,
@@ -79,7 +79,7 @@ export function buildMessage(item, details, roleId, ping = true) {
       description: excerpt(item.contents) || 'Read the announcement on Steam.',
       color: 0xf0a126,
       image: { url: details.image },
-      footer: { text: `Counter-Strike 2 • Steam • ${item.gid}` },
+      footer: { text: 'Counter-Strike 2 • Steam' },
       timestamp: new Date(item.date * 1000).toISOString()
     }]
   };

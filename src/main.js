@@ -18,7 +18,7 @@ for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => { stopping 
 const log = message => console.log(`${new Date().toISOString()} ${message}`);
 
 async function main() {
-  if (!['preview', 'check', 'run', 'send-preview', 'resolve-sent', 'resolve-retry'].includes(command)) throw new Error('Unknown command');
+  if (!['preview', 'check', 'run', 'resolve-sent', 'resolve-retry'].includes(command)) throw new Error('Unknown command');
   if (command === 'preview') {
     const items = await fetchNews();
     const latest = items.at(-1);
@@ -36,12 +36,6 @@ async function main() {
   const info = await discord.check(role, application, guild);
   log(`Verified ${info.bot} → #${info.channel}; role: ${info.role}`);
   if (command === 'check') return;
-  if (command === 'send-preview') {
-    const latest = (await fetchNews()).at(-1);
-    const message = await discord.send(buildMessage(latest, await articleDetails(latest), role, false));
-    log(`Non-pinging preview sent: https://discord.com/channels/@me/${channel}/${message.id}`);
-    return;
-  }
   const release = await lockState(statePath);
   try {
     if (command.startsWith('resolve-')) {
@@ -58,6 +52,7 @@ async function main() {
       return;
     }
     if (!Number.isInteger(interval) || interval < 60) throw new Error('POLL_SECONDS must be an integer of at least 60');
+    log(`Monitoring every ${interval}s. Waiting for new announcements; press Ctrl+C to stop.`);
     while (!stopping) {
       const state = await loadState(statePath, channel);
       if (state?.pending) throw new Error(`Delivery ${state.pending.gid} needs review; see README. Posting is paused to avoid duplicate pings.`);
@@ -66,9 +61,14 @@ async function main() {
         const next = await processNews(items, state, {
           channel, save: value => saveState(statePath, value),
           prepare: async item => buildMessage(item, await articleDetails(item), role),
-          send: payload => discord.send(payload)
+          shouldStop: () => stopping,
+          send: async payload => {
+            const message = await discord.send(payload);
+            log(`Posted ${payload.embeds[0].title}: https://discord.com/channels/${guild}/${channel}/${message.id}`);
+            return message;
+          }
         });
-        log(state ? `Check complete: ${next.seen.length - state.seen.length} announcement(s) posted.` : 'Baseline saved. Watching for new announcements; no old posts sent.');
+        if (!state && next) log('Baseline saved. Watching for new announcements; no old posts sent.');
       } catch (error) {
         if ((await loadState(statePath, channel))?.pending) throw error;
         log(`Check failed: ${error.message}. Will retry after ${interval}s.`);
@@ -76,5 +76,6 @@ async function main() {
       await sleep(interval * 1000, undefined, { signal: controller.signal }).catch(error => { if (error.name !== 'AbortError') throw error; });
     }
   } finally { await release(); }
+  log('Monitoring stopped. Posting history saved.');
 }
 main().catch(error => { console.error(`Stopped: ${error.message}`); process.exitCode = 1; });

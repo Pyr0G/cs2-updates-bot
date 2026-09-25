@@ -2,7 +2,7 @@
 
 A self-hosted Discord bot that posts Valve's official Counter-Strike 2 announcements with a clean embed and a notification for one configured role.
 
-**Status: 0.1.0 — initial preview.** Live Steam retrieval and offline behavior tests pass. Discord delivery, visual appearance and member notifications still need end-to-end verification before a stable 1.0 release.
+**Status: 1.0.0.** Automatic delivery of a newly published announcement, embed appearance and role notification have been verified locally. See [release validation](RELEASE.md).
 
 ## Features
 
@@ -32,22 +32,21 @@ On Windows, open PowerShell in the project folder:
 ```powershell
 .\Setup.ps1
 .\Run.ps1 check
-.\Run.ps1 send-preview
 .\Run.ps1 run
 ```
 
 Setup asks for the four IDs and the token, with hidden token input, and writes `.env`. It refuses to overwrite an existing `.env`. An optional ignored `settings.local.json` can supply the four ID defaults. The Windows launcher can also find an existing bundled Codex Node runtime.
 
+If Windows blocks scripts, use a one-process policy override, for example `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Run.ps1 run`. This does not change the permanent execution policy. Setup supports Windows PowerShell 5.1 and PowerShell 7.
+
 On other platforms, copy `.env.example` to `.env`, fill in its values locally, then run:
 
 ```sh
 node --env-file=.env src/main.js check
-node --env-file=.env src/main.js send-preview
 node --env-file=.env src/main.js run
 ```
 
 - `check` verifies bot identity, server, channel, role and effective permissions without posting.
-- `send-preview` sends an actual embed to the configured channel with **notifications disabled**. It does not change posting history.
 - `run` establishes a quiet baseline on first start, then posts new announcements with the configured role mention. Stop with Ctrl+C.
 
 The token is stored in plain text in `.env`; keep this file private and never commit or share it. Local configuration, state and previews are ignored by Git. The repository being public does not install your bot into other servers or keep it running.
@@ -63,7 +62,7 @@ node src/main.js preview
 node --test
 ```
 
-The preview saves `preview.json` with the latest real Steam announcement and notifications disabled. On Windows, the equivalent commands are `.\Run.ps1 preview` and `.\Run.ps1 test`.
+The preview saves `preview.json` with the latest real Steam announcement, no notification text and notifications disabled. It never sends to Discord. On Windows, the equivalent commands are `.\Run.ps1 preview` and `.\Run.ps1 test`.
 
 Tests cover source validation, text formatting, restricted mentions, pagination, effective permissions, quiet baselines, duplicate handling and interrupted delivery.
 
@@ -83,10 +82,13 @@ Launch from the project folder because relative paths resolve from the working d
 
 ## Operation and recovery
 
+Normal channel messages contain only the configured role mention and announcement embed. Terminal logs show startup, successful deliveries, errors and shutdown; unchanged polls stay quiet. Successful deliveries also save a `lastDelivery` receipt in the state file.
+
+
 - The process must keep running and its host must remain awake. Closing the terminal stops it. This version uses Discord's HTTP API without a Gateway connection, so the bot may appear offline while posting successfully.
 - Preserve `data/state.json` across restarts. Deleting it creates a new quiet baseline and can lose undelivered updates. Run one instance; a lock guards shared state.
 - Normal source failures retry on the next check. Discord rate limits honor `retry_after`. Catch-up includes timestamp boundaries. Upstream omissions or removed announcements cannot be recovered by the bot.
-- An ambiguous Discord send leaves a pending delivery and stops posting to avoid duplicate pings. Check the channel for the exact announcement; the Steam news ID appears in its footer. Stop all instances before recovery. If the message exists, run `node --env-file=.env src/main.js resolve-sent STEAM_ID`. If definitely absent, use `resolve-retry` instead, then restart. Leave uncertain cases paused for investigation. Discord nonce protection lasts only a few minutes and cannot guarantee permanent exactly-once delivery.
+- An ambiguous Discord send leaves a pending delivery and stops posting to avoid duplicate pings. Inspect the pending entry in `data/state.json` and compare its announcement URL and title with the channel. The Steam news ID needed for recovery is `pending.gid`; it is not displayed in the embed. Stop all instances before recovery. If the message exists, run `node --env-file=.env src/main.js resolve-sent STEAM_ID`. If definitely absent, use `resolve-retry` instead, then restart. Leave uncertain cases paused for investigation. Discord nonce protection lasts only a few minutes and cannot guarantee permanent exactly-once delivery.
 - After a forced kill, remove a stale `data/state.json.lock` only after confirming no bot process is running. Preserve the history file.
 - Announcement edits are not reposted. The bot follows published announcements, not every Steam client activity type or silent depot/build change.
 
