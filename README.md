@@ -23,6 +23,10 @@ Full announcement text and multiple media items are planned for a later version.
 4. Enable Developer Mode in Discord under User Settings > Advanced to copy the server, channel and notification role IDs.
 5. In the application's Bot page, create/reset its token and keep it private. A reset invalidates the previous token. The Application ID and public key are not bot tokens.
 
+## Docker hosting
+
+For an always-running Linux deployment, follow the [Docker deployment guide](DOCKER.md). It covers private configuration, persistent history, migration, restart behavior and recovery. Run only one instance for your configured channel.
+
 ## Configure and run
 
 Install [Node.js](https://nodejs.org/) 24 or newer. No package installation is necessary.

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Add Docker packaging with a non-root container, persistent posting history, resource limits and no published ports.
+- Document fresh setup, migration, automatic restart and manual recovery after uncertain delivery or a stale lock.
+
 ## 1.0.0 — 2026-09-25
 
 - Clean announcement messages with a role mention, linked excerpt, image and date.

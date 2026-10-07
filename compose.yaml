@@ -1,0 +1,31 @@
+name: cs2-updates-bot
+services:
+  bot:
+    build: .
+    restart: unless-stopped
+    init: true
+    user: "1000:1000"
+    read_only: true
+    env_file:
+      - .env
+    environment:
+      STATE_FILE: /app/data/state.json
+    volumes:
+      - type: bind
+        source: ./data
+        target: /app/data
+        bind:
+          create_host_path: false
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 64
+    mem_limit: 256m
+    cpus: 0.50
+    stop_grace_period: 2m
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
