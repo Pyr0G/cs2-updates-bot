@@ -43,6 +43,8 @@ docker compose logs --tail 40 bot
 
 The container uses a non-root user, read-only application files, a dedicated writable data directory, bounded logs/resources and no published ports. Credentials and history are excluded from the image build. Ensure Docker itself starts at boot. The restart policy resumes after host restart unless the container was deliberately stopped.
 
+The default Docker bridge still permits outbound connections to services reachable from the host, including a private LAN. On a shared or trusted-network host, apply a firewall rule scoped to this bot's container network before starting it and load that rule before automatic bot startup. Allow the public Steam and Discord traffic the bot needs, then test from inside the container that private destinations are blocked. Keep host-specific firewall rules and private addresses in the host's operations records, not in this public repository.
+
 ## Recovery and rollback
 
 ```sh

@@ -2,7 +2,7 @@
 
 A self-hosted Discord bot that posts Valve's official Counter-Strike 2 announcements with a clean embed and a notification for one configured role.
 
-**Status: 1.0.0.** Automatic delivery of a newly published announcement, embed appearance and role notification have been verified locally. See [release validation](RELEASE.md).
+**Status: 1.0.1.** Steam redirects are checked before each request. Automatic delivery, embed appearance and role notification were verified for 1.0.0; the 1.0.1 source fix was verified with tests and a live Steam read. See [release validation](RELEASE.md).
 
 ## Features
 

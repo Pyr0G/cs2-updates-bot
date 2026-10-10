@@ -1,4 +1,20 @@
-# Version 1.0 validation
+# Release validation
+
+## Version 1.0.1 — 2026-10-10
+
+The Steam feed and article fetches now validate every redirect destination before
+requesting it. A local-only redirect reproduction reached an internal endpoint
+before the fix and made no internal request afterward. Tests cover unsafe first
+and intermediate hops, the redirect limit, and the normal two-hop Steam article
+chain. All 18 offline tests pass. A live read of the latest public Steam feed
+and article completed with a canonical `steamcommunity.com` URL. No Discord
+message was sent as part of this validation. Deployment and future live delivery
+of 1.0.1 on a host are separate checks.
+
+Host-specific egress rules remain outside this public repository. The Docker
+guide explains why a private-network host needs a bot-scoped outbound firewall.
+
+## Version 1.0.0 — 2026-09-25
 
 Validated for 1.0.0 on 2026-09-25.
 

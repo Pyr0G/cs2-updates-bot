@@ -58,10 +58,57 @@ test('feed includes news as well as patches, catches up across pages and overlap
 test('unexpected feeds cannot enter posting pipeline', async () => {
   await assert.rejects(fetchNews(null, async () => ({ ok: true, json: async () => ({ appnews: { appid: 730, newsitems: [{ ...item('1'), feedname: 'press' }] } }) })), /Invalid announcement/);
 });
-test('article follows Steam redirect to canonical community link and image', async () => {
-  const result = await articleDetails(item('1'), async () => ({ ok: true, url: 'https://steamcommunity.com/games/CSGO/announcements/detail/123?tracking=x', text: async () => '<meta property="og:image" content="https://example.com/image.jpg">' }));
+test('article follows validated Steam redirects to canonical community link and image', async () => {
+  const visited = [];
+  const source = { ...item('1'), url: 'https://steamstore-a.akamaihd.net/news/123' };
+  const result = await articleDetails(source, async (url, options) => {
+    visited.push(url.href);
+    assert.equal(options.redirect, 'manual');
+    if (visited.length === 1) return new Response(null, { status: 302, headers: { location: 'https://steamcommunity.com/ogg/730/announcements/detail/123' } });
+    if (visited.length === 2) return new Response(null, { status: 302, headers: { location: '/games/CSGO/announcements/detail/123?tracking=x' } });
+    return new Response('<meta property="og:image" content="https://example.com/image.jpg">');
+  });
   assert.equal(result.url, item('1').url);
   assert.equal(result.image, 'https://example.com/image.jpg');
+  assert.equal(visited.length, 3);
+});
+test('article rejects unsafe redirects before requesting their destination', async () => {
+  for (const location of ['http://10.10.30.10/', 'https://127.0.0.1/', 'https://[::1]/', 'https://steamcommunity.com:8443/', 'https://steamcommunity.com@10.10.30.10/']) {
+    let calls = 0;
+    await assert.rejects(articleDetails(item('1'), async (_url, options) => {
+      calls++;
+      assert.equal(options.redirect, 'manual');
+      return new Response(null, { status: 302, headers: { location } });
+    }), /Unexpected Steam redirect/);
+    assert.equal(calls, 1, location);
+  }
+});
+test('article checks every redirect hop and bounds redirect loops', async () => {
+  const visited = [];
+  await assert.rejects(articleDetails(item('1'), async (url, options) => {
+    visited.push(url.href);
+    assert.equal(options.redirect, 'manual');
+    const location = visited.length === 1 ? 'https://steamcommunity.com/ogg/730/announcements/detail/123' : 'http://10.10.30.10/';
+    return new Response(null, { status: 302, headers: { location } });
+  }), /Unexpected Steam redirect/);
+  assert.equal(visited.length, 2);
+
+  let calls = 0;
+  await assert.rejects(articleDetails(item('1'), async (_url, options) => {
+    calls++;
+    assert.equal(options.redirect, 'manual');
+    return new Response(null, { status: 302, headers: { location: '/games/CSGO/announcements/detail/123' } });
+  }), /Too many Steam redirects/);
+  assert.equal(calls, 6);
+});
+test('news feed rejects redirects outside its Steam API host before requesting them', async () => {
+  let calls = 0;
+  await assert.rejects(fetchNews(null, async (_url, options) => {
+    calls++;
+    assert.equal(options.redirect, 'manual');
+    return new Response(null, { status: 302, headers: { location: 'http://10.10.30.14:8123/' } });
+  }), /Unexpected Steam redirect/);
+  assert.equal(calls, 1);
 });
 test('Discord permission check validates role notifications and channel overwrites', async () => {
   const roles = [{ id: 'g', permissions: '19456' }, { id: 'r', name: 'CS Updates', permissions: '0', mentionable: false }];
