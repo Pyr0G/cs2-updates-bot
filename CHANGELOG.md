@@ -1,7 +1,9 @@
 # Changelog
 
-## Unreleased
+## 1.0.1 — 2026-10-10
 
+- Validate each Steam redirect before requesting it, preventing redirected feed or article requests from reaching unapproved hosts.
+- Clarify that the default Docker bridge needs a separate host egress rule for private-network isolation.
 - Add Docker packaging with a non-root container, persistent posting history, resource limits and no published ports.
 - Document fresh setup, migration, automatic restart and manual recovery after uncertain delivery or a stale lock.
 

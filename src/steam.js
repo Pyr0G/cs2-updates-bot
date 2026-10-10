@@ -1,13 +1,32 @@
 export const FEED = 'steam_community_announcements';
 export const FALLBACK_IMAGE = 'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/730/header.jpg';
 
+const ARTICLE_HOSTS = new Set(['steamstore-a.akamaihd.net', 'steamcommunity.com', 'store.steampowered.com']);
+const ARTICLE_DESTINATIONS = new Set(['steamcommunity.com', 'store.steampowered.com']);
+const FEED_HOSTS = new Set(['api.steampowered.com']);
+
+async function fetchSteam(url, fetcher, hosts) {
+  let current = new URL(url);
+  for (let redirects = 0; redirects <= 5; redirects++) {
+    if (current.protocol !== 'https:' || !hosts.has(current.hostname) || current.port || current.username || current.password) {
+      throw new Error('Unexpected Steam redirect');
+    }
+    const response = await fetcher(current, { signal: AbortSignal.timeout(30000), redirect: 'manual' });
+    if (![301, 302, 303, 307, 308].includes(response.status)) return { response, url: current };
+    const location = response.headers?.get('location');
+    if (!location) throw new Error('Steam redirect has no destination');
+    current = new URL(location, current);
+  }
+  throw new Error('Too many Steam redirects');
+}
+
 export async function fetchNews(since = null, fetcher = fetch) {
   const items = new Map();
   let enddate;
   for (let page = 0; page < 100; page++) {
     const url = new URL('https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/');
     url.search = new URLSearchParams({ appid: '730', feeds: FEED, count: '100', maxlength: '0', ...(enddate ? { enddate: String(enddate) } : {}) });
-    const response = await fetcher(url, { signal: AbortSignal.timeout(30000) });
+    const { response } = await fetchSteam(url, fetcher, FEED_HOSTS);
     if (!response.ok) throw new Error(`Steam returned HTTP ${response.status}`);
     const news = (await response.json()).appnews;
     if (news?.appid !== 730 || !Array.isArray(news.newsitems)) throw new Error('Unexpected Steam feed response');
@@ -55,11 +74,10 @@ export function excerpt(content, limit = 650) {
 
 export async function articleDetails(item, fetcher = fetch) {
   const source = new URL(item.url);
-  if (!['steamstore-a.akamaihd.net', 'steamcommunity.com', 'store.steampowered.com'].includes(source.hostname) || source.protocol !== 'https:') throw new Error('Unexpected Steam announcement URL');
-  const response = await fetcher(source, { signal: AbortSignal.timeout(30000) });
+  if (!ARTICLE_HOSTS.has(source.hostname) || source.protocol !== 'https:') throw new Error('Unexpected Steam announcement URL');
+  const { response, url: destination } = await fetchSteam(source, fetcher, ARTICLE_HOSTS);
   if (!response.ok) throw new Error(`Steam article returned HTTP ${response.status}`);
-  const destination = new URL(response.url);
-  if (!['steamcommunity.com', 'store.steampowered.com'].includes(destination.hostname)) throw new Error('Unexpected announcement redirect');
+  if (!ARTICLE_DESTINATIONS.has(destination.hostname)) throw new Error('Unexpected announcement redirect');
   destination.search = '';
   const html = await response.text();
   const tag = html.match(/<meta\b[^>]*property=["']og:image["'][^>]*>/i)?.[0];
