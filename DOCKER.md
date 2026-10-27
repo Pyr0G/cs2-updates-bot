@@ -32,7 +32,7 @@ docker compose ps
 docker compose logs --tail 40 bot
 ```
 
-Starting resumes from transferred history and can post announcements published while the bot was stopped, each with the configured role ping. Review that expected catch-up before starting. An absent history file instead establishes a quiet baseline; do not discard existing history unintentionally.
+Every process start establishes a quiet baseline from the current feed, including when transferred history exists. Announcements published while the bot was stopped are intentionally skipped; subsequent new announcements are posted. Preserve transferred history for pending-delivery protection and receipts. An unresolved pending delivery blocks startup and must be reviewed first.
 
 Verify the startup identity and monitoring logs, then perform a controlled restart and inspect logs again:
 
@@ -51,8 +51,16 @@ The default Docker bridge still permits outbound connections to services reachab
 docker compose stop bot
 ```
 
-After a hard kill or power loss, version 1.0 may leave a stale data/state.json.lock. Automatic container restart does not remove it. Stop the container, confirm no other instance uses the state, and follow the README lock recovery procedure. An uncertain pending delivery also requires manual review; restarting must not silently replay it. A container reported as running is not proof of successful polling; inspect errors in its logs.
+After a hard kill or power loss, the bot may leave a stale data/state.json.lock. Automatic container restart does not remove it. Stop the container, confirm no other instance uses the state, and follow the README lock recovery procedure. An uncertain pending delivery also requires manual review; restarting must not silently replay it. A container reported as running is not proof of successful polling; inspect errors in its logs.
 
-To move back to another machine, stop this container and securely copy its latest state.json back before starting the other instance. Do not restore an older history over newer successful deliveries. Keep credentials and state backups private. No Docker socket or other host application directories should be mounted into this container.
+To move back to another machine, stop this container and securely copy its latest state.json back before starting the other instance. The destination still baselines the current feed quietly; it does not replay downtime announcements. Do not restore an older history over newer successful deliveries. Keep credentials and state backups private. No Docker socket or other host application directories should be mounted into this container.
 
 Deployment files are prepared separately from the original 1.0 release. Build, live-host checks and restart validation must be completed on the target before claiming deployment success.
+
+## Updating to 1.1.0
+
+This version changes restart behavior: it skips the feed present at every process start instead of catching up on announcements published during downtime. Keep exactly one reporting instance active when switching hosts. The bot does not coordinate histories or acquire a cross-host lock.
+
+Back up the current image/source and private history, build and test the replacement, then use your existing deployment manager to stop and recreate only the bot. If a system service manages Compose or requires a host-specific isolation override, retain that manager and override rather than starting a second standalone instance. Confirm the quiet-baseline log and absence of pending errors. A Docker restart policy does not configure a hypervisor VM to start with its host; configure and test each startup layer separately.
+
+Complete patch notes beyond the documented device/Discord safety budget remain held rather than truncated. Review the source announcement and logs; do not delete history or clear an unrelated pending delivery to bypass formatting limits.

@@ -54,3 +54,15 @@ export async function processNews(items, state, { save, send, prepare, channel, 
   }
   return next;
 }
+
+// Manual power switching: every process start skips the current feed quietly.
+// Never erase an uncertain delivery when refreshing the startup baseline.
+export async function baselineNews(items, state, { channel, save, shouldStop = () => false }) {
+  if (state?.pending) throw new Error(`Delivery ${state.pending.gid} needs review before startup baseline`);
+  if (state && state.channel !== channel) throw new Error('Posting history belongs to another channel');
+  if (shouldStop()) return null;
+  if (!items.length) throw new Error('Empty startup feed; baseline not established');
+  const next = { ...state, version: 1, channel, since: Math.max(...items.map(item => item.date)), seen: items.map(item => item.gid), pending: null };
+  await save(next);
+  return next;
+}

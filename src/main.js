@@ -3,7 +3,7 @@ import { writeFile } from 'node:fs/promises';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { fetchNews, articleDetails, buildMessage } from './steam.js';
 import { Discord } from './discord.js';
-import { loadState, saveState, lockState, processNews } from './state.js';
+import { loadState, saveState, lockState, processNews, baselineNews } from './state.js';
 
 const command = process.argv[2] || 'preview';
 const role = process.env.DISCORD_ROLE_ID;
@@ -53,22 +53,28 @@ async function main() {
     }
     if (!Number.isInteger(interval) || interval < 60) throw new Error('POLL_SECONDS must be an integer of at least 60');
     log(`Monitoring every ${interval}s. Waiting for new announcements; press Ctrl+C to stop.`);
+    let starting = true;
     while (!stopping) {
       const state = await loadState(statePath, channel);
       if (state?.pending) throw new Error(`Delivery ${state.pending.gid} needs review; see README. Posting is paused to avoid duplicate pings.`);
       try {
-        const items = await fetchNews(state?.since ?? null);
-        const next = await processNews(items, state, {
-          channel, save: value => saveState(statePath, value),
-          prepare: async item => buildMessage(item, await articleDetails(item), role),
-          shouldStop: () => stopping,
-          send: async payload => {
-            const message = await discord.send(payload);
-            log(`Posted ${payload.embeds[0].title}: https://discord.com/channels/${guild}/${channel}/${message.id}`);
-            return message;
-          }
-        });
-        if (!state && next) log('Baseline saved. Watching for new announcements; no old posts sent.');
+        const items = await fetchNews(starting ? null : state?.since ?? null);
+        if (starting) {
+          const baseline = await baselineNews(items, state, { channel, save: value => saveState(statePath, value), shouldStop: () => stopping });
+          if (baseline) { starting = false; log('Quiet startup baseline saved. Watching for new announcements; existing posts skipped.'); }
+        } else {
+          const next = await processNews(items, state, {
+            channel, save: value => saveState(statePath, value),
+            prepare: async item => buildMessage(item, await articleDetails(item), role),
+            shouldStop: () => stopping,
+            send: async payload => {
+              const message = await discord.send(payload);
+              log(`Posted ${payload.embeds[0].title}: https://discord.com/channels/${guild}/${channel}/${message.id}`);
+              return message;
+            }
+          });
+          if (!state && next) log('Baseline saved. Watching for new announcements; no old posts sent.');
+        }
       } catch (error) {
         if ((await loadState(statePath, channel))?.pending) throw error;
         log(`Check failed: ${error.message}. Will retry after ${interval}s.`);

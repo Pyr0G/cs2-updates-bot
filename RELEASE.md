@@ -1,5 +1,15 @@
 # Release validation
 
+## Version 1.1.0 — 2026-10-27
+
+All 31 offline Node tests pass in this source checkout. The complete October 23 fixture retains all 54 paragraphs and 53 bullets, including its final entry. Coverage includes nested lists, headings, entities, Unicode/escape-safe continuation splits, distinct continuation URLs, Discord title/description/aggregate budgets and restricted role mentions. Oversized input is rejected before delivery intent, transmission or checkpoint advancement.
+
+Four startup tests cover quiet baselining with existing history, subsequent new items, unresolved pending delivery, empty/failed startup reads, destination validation and shutdown. Quiet startup now occurs on every process start and deliberately skips announcements published while stopped; this replaces the previous restart catch-up behavior.
+
+The same runtime source was deployed to a Linux Docker host. All 28 tests available in that guest checkout passed inside the rebuilt image without network access, credentials or production history. Discord access and quiet startup were verified without sending a test message or replaying a historical announcement. Existing non-root/read-only operation, capability restrictions and resource limits were retained. A pre-existing stale state lock was archived only after confirming no owner process or pending delivery; automatic lock deletion is not part of this release.
+
+A genuine newly published announcement using this renderer and a complete host power-cycle recovery have not been newly validated. The earlier release security-review results below apply to those historical snapshots; no new repository-wide security scan is claimed for 1.1.0.
+
 ## Version 1.0.1 — 2026-10-10
 
 The Steam feed and article fetches now validate every redirect destination before
