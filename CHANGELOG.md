@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.0 — 2026-10-27
+
+- Render complete patch notes instead of the 650-character message excerpt, preserving section labels, paragraphs, nested bullets, entities and Unicode.
+- Split long notes across ordered continuation embeds in one atomic message with one role mention and the image on the final embed. Hold unsafe oversized notes before sending instead of silently truncating them.
+- Quietly baseline the current feed on every process start, including existing-history restarts, for manual switching between hosts. Announcements published during downtime are deliberately skipped; subsequent new announcements are delivered.
+- Preserve pending-delivery review, receipts, duplicate tracking, validated Steam redirects and container isolation guidance.
+- Add the complete October 23 announcement fixture and regression tests for every paragraph/bullet, continuation limits, mention safety, startup baselines and rejection without state changes.
+- Clarify manual stale-lock recovery and the separate hypervisor, Docker and bot startup layers. No automatic stale-lock deletion is introduced.
+
 ## 1.0.1 — 2026-10-10
 
 - Validate each Steam redirect before requesting it, preventing redirected feed or article requests from reaching unapproved hosts.

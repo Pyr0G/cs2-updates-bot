@@ -2,18 +2,18 @@
 
 A self-hosted Discord bot that posts Valve's official Counter-Strike 2 announcements with a clean embed and a notification for one configured role.
 
-**Status: 1.0.1.** Steam redirects are checked before each request. Automatic delivery, embed appearance and role notification were verified for 1.0.0; the 1.0.1 source fix was verified with tests and a live Steam read. See [release validation](RELEASE.md).
+**Status: 1.1.0.** Complete patch-note rendering and quiet startup on every restart are implemented and tested. The server deployment passed non-posting startup checks; a newly published announcement using this renderer remains to be confirmed. See [release validation](RELEASE.md).
 
 ## Features
 
 - Official CS2 community announcements: patch notes, regular news and events.
-- Linked title, short excerpt, Steam preview image and publication date.
+- Linked title, complete patch notes within explicit safety limits, Steam preview image and publication date.
 - One configured role mention, with all other mentions disabled.
-- Two-minute polling, quiet first startup and persistent duplicate tracking.
-- Catch-up pagination, rate-limit handling and manual review after uncertain deliveries.
+- Two-minute polling, quiet startup on every process start and persistent duplicate tracking.
+- In-session pagination, rate-limit handling and manual review after uncertain deliveries.
 - Node.js 24+, no third-party dependencies; Windows and cross-platform launch options.
 
-Full announcement text and multiple media items are planned for a later version. This project is unofficial and is not affiliated with Valve or Discord.
+Long notes use continuation embeds in one message with one role notification. Multiple media items are not supported. This project is unofficial and is not affiliated with Valve or Discord.
 
 ## Create and install your Discord bot
 
@@ -68,7 +68,7 @@ node --test
 
 The preview saves `preview.json` with the latest real Steam announcement, no notification text and notifications disabled. It never sends to Discord. On Windows, the equivalent commands are `.\Run.ps1 preview` and `.\Run.ps1 test`.
 
-Tests cover source validation, text formatting, restricted mentions, pagination, effective permissions, quiet baselines, duplicate handling and interrupted delivery.
+Tests cover source validation, complete patch-note formatting, restricted mentions, pagination, effective permissions, quiet startup baselines, duplicate handling and interrupted delivery.
 
 ## Configuration
 
@@ -90,10 +90,12 @@ Normal channel messages contain only the configured role mention and announcemen
 
 
 - The process must keep running and its host must remain awake. Closing the terminal stops it. This version uses Discord's HTTP API without a Gateway connection, so the bot may appear offline while posting successfully.
-- Preserve `data/state.json` across restarts. Deleting it creates a new quiet baseline and can lose undelivered updates. Run one instance; a lock guards shared state.
-- Normal source failures retry on the next check. Discord rate limits honor `retry_after`. Catch-up includes timestamp boundaries. Upstream omissions or removed announcements cannot be recovered by the bot.
-- An ambiguous Discord send leaves a pending delivery and stops posting to avoid duplicate pings. Inspect the pending entry in `data/state.json` and compare its announcement URL and title with the channel. The Steam news ID needed for recovery is `pending.gid`; it is not displayed in the embed. Stop all instances before recovery. If the message exists, run `node --env-file=.env src/main.js resolve-sent STEAM_ID`. If definitely absent, use `resolve-retry` instead, then restart. Leave uncertain cases paused for investigation. Discord nonce protection lasts only a few minutes and cannot guarantee permanent exactly-once delivery.
+- Preserve `data/state.json` across restarts for delivery receipts and pending-delivery protection. Every process start quietly baselines the current feed, including announcements published while the bot was off; only subsequent announcements are reported. Run one instance; a lock guards shared state. An unresolved pending delivery prevents startup baselining until reviewed.
+- Normal source failures retry on the next check. Discord rate limits honor `retry_after`. In-session pagination includes timestamp boundaries; startup deliberately skips downtime announcements. Upstream omissions or removed announcements cannot be recovered by the bot.
+- An ambiguous Discord send leaves a pending delivery and stops posting to avoid duplicate pings. Inspect the pending entry in `data/state.json` and compare its announcement URL and title with the channel. The Steam news ID needed for recovery is `pending.gid`; it is not displayed in the embed. Stop all instances before recovery. If the message exists, run `node --env-file=.env src/main.js resolve-sent STEAM_ID`. If definitely absent, use `resolve-retry` instead, then restart. This clears the pending block; the quiet startup baseline still skips existing announcements and does not force a historical resend. Leave uncertain cases paused for investigation. Discord nonce protection lasts only a few minutes and cannot guarantee permanent exactly-once delivery.
 - After a forced kill, remove a stale `data/state.json.lock` only after confirming no bot process is running. Preserve the history file.
+- Patch notes preserve section labels, paragraphs and nested list bullets. Descriptions are split across at most two embeds, with distinct continuation links and the image at the end. One message permits only the configured role mention.
+- Safety limits are 32,000 UTF-8 bytes of source, 16 nested list levels and 5,200 UTF-8 bytes of formatted descriptions in total (3,500 per embed). This leaves room for titles/footers within Discord's 6,000-character combined embed budget. Oversized notes fail before sending or advancing the checkpoint; they are held for review rather than silently truncated, and later announcements in that poll wait too.
 - Announcement edits are not reposted. The bot follows published announcements, not every Steam client activity type or silent depot/build change.
 
 ## Sources

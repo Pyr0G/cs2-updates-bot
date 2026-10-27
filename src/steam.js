@@ -1,3 +1,5 @@
+import { decode, formatPatchNotes, splitDescriptions, titlePrefix } from './patchnotes.js';
+export { decode } from './patchnotes.js';
 export const FEED = 'steam_community_announcements';
 export const FALLBACK_IMAGE = 'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/730/header.jpg';
 
@@ -46,16 +48,6 @@ export async function fetchNews(since = null, fetcher = fetch) {
   throw new Error('Steam catch-up exceeded 100 pages; checkpoint unchanged');
 }
 
-export function decode(text) {
-  return text.replace(/&(?:amp|lt|gt|quot|apos|nbsp|#\d+|#x[\da-f]+);/gi, entity => {
-    const named = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&apos;': "'", '&nbsp;': ' ' };
-    if (named[entity.toLowerCase()]) return named[entity.toLowerCase()];
-    const hex = entity.toLowerCase().startsWith('&#x');
-    const value = Number.parseInt(entity.slice(hex ? 3 : 2, -1), hex ? 16 : 10);
-    return value > 0 && value <= 0x10ffff ? String.fromCodePoint(value) : '';
-  });
-}
-
 export function excerpt(content, limit = 650) {
   const plain = decode(content
     .replace(/\[(img|video|youtube)[^\]]*\][\s\S]*?\[\/\1\]/gi, '')
@@ -87,18 +79,21 @@ export async function articleDetails(item, fetcher = fetch) {
 }
 
 export function buildMessage(item, details, roleId, ping = true) {
+  const parts = splitDescriptions(formatPatchNotes(item.contents));
+  const embeds = parts.map((description, part) => {
+    const url = details.url ? new URL(details.url) : null;
+    if (part && url) url.hash = `cs2-part-${part + 1}`;
+    return {
+      title: titlePrefix(item.title, part ? 244 : 256) + (part ? ' (continued)' : ''),
+      url: url?.href, description, color: 0xf0a126,
+      ...(part === parts.length - 1 ? { image: { url: details.image } } : {}),
+      footer: { text: 'Counter-Strike 2 \u2022 Steam' },
+      timestamp: new Date(item.date * 1000).toISOString()
+    };
+  });
   return {
     content: ping ? `<@&${roleId}>` : '',
     allowed_mentions: { parse: [], roles: ping ? [roleId] : [], users: [], replied_user: false },
-    nonce: ping ? item.gid : `p${item.gid}`,
-    enforce_nonce: true,
-    embeds: [{
-      title: item.title.slice(0, 256), url: details.url,
-      description: excerpt(item.contents) || 'Read the announcement on Steam.',
-      color: 0xf0a126,
-      image: { url: details.image },
-      footer: { text: 'Counter-Strike 2 • Steam' },
-      timestamp: new Date(item.date * 1000).toISOString()
-    }]
+    nonce: ping ? item.gid : `p${item.gid}`, enforce_nonce: true, embeds
   };
 }
