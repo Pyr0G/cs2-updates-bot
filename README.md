@@ -2,7 +2,7 @@
 
 A self-hosted Discord bot that posts Valve's official Counter-Strike 2 announcements with a clean embed and a notification for one configured role.
 
-**Status: 1.1.0.** Complete patch-note rendering and quiet startup on every restart are implemented and tested. The server deployment passed non-posting startup checks; a newly published announcement using this renderer remains to be confirmed. See [release validation](RELEASE.md).
+**Status: 1.1.1.** Complete patch-note rendering includes blank lines between paragraphs, section labels and list entries for readability. Quiet startup on every restart remains enabled. See [release validation](RELEASE.md).
 
 ## Features
 
@@ -26,6 +26,10 @@ Long notes use continuation embeds in one message with one role notification. Mu
 ## Docker hosting
 
 For an always-running Linux deployment, follow the [Docker deployment guide](DOCKER.md). It covers private configuration, persistent history, migration, restart behavior and recovery. Run only one instance for your configured channel.
+
+## ESP32 alternative
+
+The native ESP32 implementation, build settings and USB management helper are included in [firmware](firmware/README.md). It preserves configuration and history across normal updates. Use manual power switching so the ESP and server do not report concurrently.
 
 ## Configure and run
 

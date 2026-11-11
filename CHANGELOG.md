@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1 — 2026-11-11
+
+- Restore blank lines between patch-note paragraphs, section labels and list entries, including nested bullets. Preserve explicit blank lines and HTML breaks while limiting consecutive breaks to two.
+- Add the complete November 4 announcement and October 14 reference fixtures to verify readable spacing without losing content, with existing Discord limits and notification safeguards retained.
+- Recover and include the ESP32 firmware, pinned build settings, trusted CA roots, USB management helper and native formatter/history tests in this repository. Apply the same paragraph spacing to ESP output while preserving its NVS configuration and history.
+
 ## 1.1.0 — 2026-10-27
 
 - Render complete patch notes instead of the 650-character message excerpt, preserving section labels, paragraphs, nested bullets, entities and Unicode.

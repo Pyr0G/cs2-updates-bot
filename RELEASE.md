@@ -1,5 +1,17 @@
 # Release validation
 
+## Version 1.1.1 — 2026-11-11
+
+All 34 Node tests pass locally and in the rebuilt server image. All 21 firmware tests pass in a temporary Linux container using g++ and Python, including 12 tests of the actual C++ formatter and nine history-migration tests. Windows application control blocked locally compiled test executables; Linux validation completed without changing that policy.
+
+The November 4 announcement shown in the reported screenshot retains all 23 paragraphs (two section labels and 21 list entries), separated by blank lines. The October 14 reference fixture verifies spacing around introductory paragraphs and section boundaries. Existing complete October 23 coverage, nested indentation, Unicode, restricted mentions, continuation splitting and oversize rejection remain covered.
+
+The server update is running with its previous delivery history intact, no pending delivery and a successful quiet startup/Discord permission check. Existing container restrictions remain in place. A recovery image and previous source were retained privately.
+
+The previous ESP32 source was recovered from saved work history and is now included in `firmware/`, with pinned build settings, TLS trust roots and USB management tools. The firmware builds successfully and was uploaded with flash hash verification, retaining the existing NVS configuration and checkpoint. The embedded trust store contains five roots present in Certifi 2026.7.22; provenance and licensing are included. A private settings backup was retained before upload. No historical Discord announcement was replayed or edited for this update.
+
+The actual device's non-posting November 4 preview exactly matches the server formatter: 1,442 UTF-8 description bytes, 23 separated blocks and 21 bullets. Wi-Fi, clock synchronization and Discord identity/destination/role permissions passed. The checkpoint remained unchanged, with no pending delivery. ESP was left in current-session standby with automatic posting armed for the next power-up while the server runs. A genuine future Discord delivery and a full host power-cycle remain untested for this release.
+
 ## Version 1.1.0 — 2026-10-27
 
 All 31 offline Node tests pass in this source checkout. The complete October 23 fixture retains all 54 paragraphs and 53 bullets, including its final entry. Coverage includes nested lists, headings, entities, Unicode/escape-safe continuation splits, distinct continuation URLs, Discord title/description/aggregate budgets and restricted role mentions. Oversized input is rejected before delivery intent, transmission or checkpoint advancement.

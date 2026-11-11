@@ -9,3 +9,7 @@ data/
 preview.json
 node_modules/
 *.log
+firmware/.pio/
+firmware/.local/
+firmware/*.local.json
+firmware/**/__pycache__/

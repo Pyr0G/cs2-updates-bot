@@ -21,13 +21,38 @@ test('complete October 23 announcement keeps all 54 paragraphs and 53 bullets', 
   assert.ok(rendered.length > 650);
 });
 test('nested bullets retain indentation and literal section headings', () => {
-  assert.equal(literal(formatPatchNotes('[p]\\[ MAPS ][/p][list][*][p]Parent[/p][list][*][p]Child[/p][/*][/list][/*][/list]')), '[ MAPS ]\n• Parent\n  • Child');
+  assert.equal(literal(formatPatchNotes('[p]\\[ MAPS ][/p][list][*][p]Parent[/p][list][*][p]Child[/p][/*][/list][/*][/list]')), '[ MAPS ]\n\n• Parent\n\n  • Child');
 });
 test('HTML entities, numeric Unicode and source mentions are safe', () => {
-  assert.equal(formatPatchNotes('<p>A &amp; B &#x1f600;</p><ul><li>@everyone *literal*</li></ul>'), 'A & B 😀\n• @\u200beveryone \\*literal\\*');
+  assert.equal(formatPatchNotes('<p>A &amp; B &#x1f600;</p><ul><li>@everyone *literal*</li></ul>'), 'A & B 😀\n\n• @\u200beveryone \\*literal\\*');
 });
 test('media is removed while surrounding notes remain', () => {
-  assert.equal(formatPatchNotes('[p]Before[/p][img]hidden URL[/img][p]After[/p]'), 'Before\nAfter');
+  assert.equal(formatPatchNotes('[p]Before[/p][img]hidden URL[/img][p]After[/p]'), 'Before\n\nAfter');
+});
+
+test('plain newlines and HTML breaks keep paragraph spacing without growing blank runs', () => {
+  assert.equal(formatPatchNotes('First\nsecond\n\nThird\n\n\nFourth'), 'First\nsecond\n\nThird\n\nFourth');
+  assert.equal(formatPatchNotes('<p>First<br>second<br><br>Third</p><p></p><p>Fourth</p>'), 'First\nsecond\n\nThird\n\nFourth');
+});
+
+test('November 4 screenshot announcement separates every heading and bullet', () => {
+  const source = readFileSync(new URL('./fixtures/nov04.bbcode', import.meta.url), 'utf8');
+  const rendered = literal(formatPatchNotes(source));
+  const paragraphs = [...source.matchAll(/\[p\](.*?)\[\/p\]/g)].map(m => m[1].replace(/\\\[/g, '['));
+  assert.equal(paragraphs.length, 23);
+  assert.deepEqual(rendered.split('\n\n'), paragraphs.map(p => p.startsWith('[ ') ? p : `• ${p}`));
+  assert.equal((rendered.match(/•/g) || []).length, 21);
+  const payload = buildMessage(item(source), details, '123');
+  assert.equal(payload.embeds.map(e => e.description).join(''), formatPatchNotes(source));
+});
+
+test('October 14 reference announcement separates introductory paragraphs and list entries', () => {
+  const source = readFileSync(new URL('./fixtures/oct14.bbcode', import.meta.url), 'utf8');
+  const rendered = literal(formatPatchNotes(source));
+  assert.ok(rendered.startsWith('[ UI ]\n\nDemo/Replay viewer improvements:\n\n• Added a progress bar'));
+  assert.ok(rendered.includes('in the demo file\n\n[ MISC ]\n\n• Round backup'));
+  assert.equal(rendered.split('\n\n').length, 12);
+  assert.doesNotMatch(rendered, /\n{3,}/);
 });
 test('long notes use distinct continuation embeds without losing UTF-8 or escapes', () => {
   const source = ('😀 item_with_name\n'.repeat(190)).trimEnd();

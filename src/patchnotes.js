@@ -13,7 +13,10 @@ export function decode(text) {
 export function formatPatchNotes(source) {
   if (typeof source !== 'string' || Buffer.byteLength(source) > MAX_SOURCE_BYTES) throw new Error('Full announcement exceeds source limit; nothing sent');
   let plain = '', depth = 0;
-  const line = () => { plain = plain.replace(/[ \t]+$/, ''); if (plain && !plain.endsWith('\n')) plain += '\n'; };
+  const line = (breaks = 1) => {
+    plain = plain.replace(/[ \t]+$/, '');
+    if (plain) while (!plain.endsWith('\n'.repeat(breaks))) plain += '\n';
+  };
   for (let i = 0; i < source.length;) {
     if (Buffer.byteLength(plain) > MAX_DESCRIPTION_BYTES) throw new Error('Complete patch notes exceed Discord budget; nothing sent');
     if (source[i] === '\\' && /[\[\]]/.test(source[i + 1] || '')) { plain += source[i + 1]; i += 2; continue; }
@@ -31,13 +34,15 @@ export function formatPatchNotes(source) {
           if (stop >= 0) { i = stop + close.length; continue; }
         }
         if (['list', 'olist', 'ul', 'ol'].includes(name)) {
-          line();
+          line(2);
           if (closing) depth = Math.max(0, depth - 1);
           else { if (depth >= 16) throw new Error('Announcement nesting limit; nothing sent'); ++depth; }
         } else if (['*', 'li'].includes(name)) {
-          line(); if (!closing) plain += '  '.repeat(Math.max(0, depth - 1)) + '• ';
-        } else if (['p', 'div', 'br', 'tr', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(name)) {
-          if (closing || !plain.endsWith('• ')) line();
+          line(2); if (!closing) plain += '  '.repeat(Math.max(0, depth - 1)) + '• ';
+        } else if (name === 'br') {
+          line(plain.endsWith('\n') ? 2 : 1);
+        } else if (['p', 'div', 'tr', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(name)) {
+          if (closing || !plain.endsWith('• ')) line(2);
         } else if (['td', 'th'].includes(name)) { if (closing) plain += ' | '; }
         else if (!['b', 'strong', 'i', 'em', 'u', 's', 'strike', 'url', 'a', 'quote', 'blockquote', 'code', 'pre', 'spoiler', 'table', 'span', 'img', 'hr'].includes(name)) handled = false;
         if (handled) { i = end + 1; continue; }
@@ -45,7 +50,7 @@ export function formatPatchNotes(source) {
     }
     let c = source[i++];
     if (c === '\r') continue;
-    if (c === '\n') { line(); continue; }
+    if (c === '\n') { line(plain.endsWith('\n') ? 2 : 1); continue; }
     if (c === '\t') c = ' ';
     if (c === ' ' && (!plain || /[ \n]$/.test(plain))) continue;
     plain += c;
