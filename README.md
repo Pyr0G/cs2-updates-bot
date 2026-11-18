@@ -2,7 +2,7 @@
 
 A self-hosted Discord bot that posts Valve's official Counter-Strike 2 announcements with a clean embed and a notification for one configured role.
 
-**Status: 1.1.1.** Complete patch-note rendering includes blank lines between paragraphs, section labels and list entries for readability. On 2026-11-18, the operator confirmed successful live Discord delivery, correct message formatting and automatic bot startup after a full power cycle for both the Docker deployment and ESP32 microcontroller implementation. Quiet startup on every restart remains enabled. See [release validation](RELEASE.md).
+**Version 1.1.1.** Complete patch notes with readable spacing and quiet startup on every restart. Live Discord delivery, message formatting and automatic startup after a power cycle are validated for both the Docker deployment and ESP32 microcontroller implementation. See [release validation](RELEASE.md) for test coverage and confirmation dates.
 
 ## Features
 
@@ -43,7 +43,7 @@ On Windows, open PowerShell in the project folder:
 .\Run.ps1 run
 ```
 
-Setup asks for the four IDs and the token, with hidden token input, and writes `.env`. It refuses to overwrite an existing `.env`. An optional ignored `settings.local.json` can supply the four ID defaults. The Windows launcher can also find an existing bundled Codex Node runtime.
+Setup asks for the four IDs and the token, with hidden token input, and writes `.env`. It refuses to overwrite an existing `.env`. An optional ignored `settings.local.json` can supply the four ID defaults.
 
 If Windows blocks scripts, use a one-process policy override, for example `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Run.ps1 run`. This does not change the permanent execution policy. Setup supports Windows PowerShell 5.1 and PowerShell 7.
 
@@ -55,9 +55,9 @@ node --env-file=.env src/main.js run
 ```
 
 - `check` verifies bot identity, server, channel, role and effective permissions without posting.
-- `run` establishes a quiet baseline on first start, then posts new announcements with the configured role mention. Stop with Ctrl+C.
+- `run` establishes a quiet baseline on every start, then posts new announcements with the configured role mention. Stop with Ctrl+C.
 
-The token is stored in plain text in `.env`; keep this file private and never commit or share it. Local configuration, state and previews are ignored by Git. The repository being public does not install your bot into other servers or keep it running.
+The token is stored in plain text in `.env`; keep this file private and never commit or share it. Local configuration, state and previews are ignored by Git. Each installation requires its own Discord configuration and a running host or microcontroller.
 
 Member notification preferences may suppress push notifications even when a role mention is valid. Confirm actual notifications with a member during commissioning.
 
@@ -91,7 +91,6 @@ Launch from the project folder because relative paths resolve from the working d
 ## Operation and recovery
 
 Normal channel messages contain only the configured role mention and announcement embed. Terminal logs show startup, successful deliveries, errors and shutdown; unchanged polls stay quiet. Successful deliveries also save a `lastDelivery` receipt in the state file.
-
 
 - The process must keep running and its host must remain awake. Closing the terminal stops it. This version uses Discord's HTTP API without a Gateway connection, so the bot may appear offline while posting successfully.
 - Preserve `data/state.json` across restarts for delivery receipts and pending-delivery protection. Every process start quietly baselines the current feed, including announcements published while the bot was off; only subsequent announcements are reported. Run one instance; a lock guards shared state. An unresolved pending delivery prevents startup baselining until reviewed.

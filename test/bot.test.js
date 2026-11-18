@@ -73,6 +73,7 @@ test('article follows validated Steam redirects to canonical community link and 
   assert.equal(visited.length, 3);
 });
 test('article rejects unsafe redirects before requesting their destination', async () => {
+  // Documentation-only addresses keep these mocked destinations independent of any deployment.
   for (const location of ['http://192.0.2.10/', 'https://127.0.0.1/', 'https://[::1]/', 'https://steamcommunity.com:8443/', 'https://steamcommunity.com@192.0.2.10/']) {
     let calls = 0;
     await assert.rejects(articleDetails(item('1'), async (_url, options) => {

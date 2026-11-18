@@ -2,7 +2,9 @@
 
 The `firmware` folder contains the native C++ version for a classic ESP32 with 4 MB flash and 2.4 GHz Wi-Fi. It uses the same Discord bot application, channel and role as the server version. Run only one reporter at a time.
 
-The recovered firmware source is now versioned alongside the server. Version 1.1.1 adds blank lines between section labels, paragraphs and list entries, retaining nested bullet indentation and complete notes. Both implementations share the announcement fixtures in `test/fixtures`.
+Version 1.1.1 adds blank lines between section labels, paragraphs and list entries, retaining nested bullet indentation and complete notes. Both implementations share the announcement fixtures in `test/fixtures`.
+
+Live Discord delivery, message formatting and automatic startup after a power cycle were confirmed for the microcontroller implementation on 2026-11-18. See [release validation](../RELEASE.md) for details.
 
 ## Build and upload
 

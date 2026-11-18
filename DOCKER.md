@@ -2,13 +2,15 @@
 
 Requires Docker Engine and Docker Compose v2 or newer on a Linux host. This deploys one instance for one configured Discord server. No incoming ports or public domain are required.
 
+Live Discord delivery, message formatting and automatic bot startup after a host power cycle were confirmed for the Docker deployment on 2026-11-18. See [release validation](RELEASE.md) for details.
+
 ## Prepare
 
-Copy package.json, src/, Dockerfile, .dockerignore and compose.yaml into a dedicated directory on the host. Keep .dockerignore alongside the Dockerfile so private files are excluded from the build context.
+Copy `package.json`, `src/`, `Dockerfile`, `.dockerignore` and `compose.yaml` into a dedicated directory on the host. Keep `.dockerignore` alongside the `Dockerfile` so private files are excluded from the build context.
 
-For a new installation, create .env from .env.example and configure your own bot token and server/channel/role IDs. Leave state.json absent so the first start establishes a quiet baseline; do not create an empty state file.
+For a new installation, create `.env` from `.env.example` and configure your own bot token and server/channel/role IDs. Leave `state.json` absent so the first start establishes a quiet baseline; do not create an empty state file.
 
-For migration, stop the old instance first, then transfer your private .env and its final data/state.json over a trusted encrypted connection. Do not copy a state lock or temporary file. Preserve a private backup of the history before migration.
+For migration, stop the old instance first, then transfer your private `.env` and its final `data/state.json` over a trusted encrypted connection. Do not copy a state lock or temporary file. Preserve a private backup of the history before migration.
 
 On the Linux host, from the deployment directory:
 
@@ -51,16 +53,16 @@ The default Docker bridge still permits outbound connections to services reachab
 docker compose stop bot
 ```
 
-After a hard kill or power loss, the bot may leave a stale data/state.json.lock. Automatic container restart does not remove it. Stop the container, confirm no other instance uses the state, and follow the README lock recovery procedure. An uncertain pending delivery also requires manual review; restarting must not silently replay it. A container reported as running is not proof of successful polling; inspect errors in its logs.
+After a hard kill or power loss, the bot may leave a stale `data/state.json.lock`. Automatic container restart does not remove it. Stop the container, confirm no other instance uses the state, and follow the [README lock recovery procedure](README.md#operation-and-recovery). An uncertain pending delivery also requires manual review; restarting must not silently replay it. A container reported as running is not proof of successful polling; inspect errors in its logs.
 
-To move back to another machine, stop this container and securely copy its latest state.json back before starting the other instance. The destination still baselines the current feed quietly; it does not replay downtime announcements. Do not restore an older history over newer successful deliveries. Keep credentials and state backups private. No Docker socket or other host application directories should be mounted into this container.
+To move back to another machine, stop this container and securely copy its latest `state.json` back before starting the other instance. The destination still baselines the current feed quietly; it does not replay downtime announcements. Do not restore an older history over newer successful deliveries. Keep credentials and state backups private. No Docker socket or other host application directories should be mounted into this container.
 
-Deployment files are prepared separately from the original 1.0 release. Build, live-host checks and restart validation must be completed on the target before claiming deployment success.
+For each new installation, verify the build, Discord access, live delivery and automatic startup after a host restart.
 
 ## Updating to 1.1.0
 
 This version changes restart behavior: it skips the feed present at every process start instead of catching up on announcements published during downtime. Keep exactly one reporting instance active when switching hosts. The bot does not coordinate histories or acquire a cross-host lock.
 
-Back up the current image/source and private history, build and test the replacement, then use your existing deployment manager to stop and recreate only the bot. If a system service manages Compose or requires a host-specific isolation override, retain that manager and override rather than starting a second standalone instance. Confirm the quiet-baseline log and absence of pending errors. A Docker restart policy does not configure a hypervisor VM to start with its host; configure and test each startup layer separately.
+Back up the current image/source and private history, build and test the replacement, then use your existing deployment manager to stop and recreate only the bot. If a system service manages Compose or requires a host-specific isolation override, retain that manager and override rather than starting a second standalone instance. Confirm the quiet-baseline log and absence of pending errors. Configure and test host startup, Docker startup and container restart separately. If Docker runs in a virtual machine, verify that the virtual machine also starts automatically.
 
 Complete patch notes beyond the documented device/Discord safety budget remain held rather than truncated. Review the source announcement and logs; do not delete history or clear an unrelated pending delivery to bypass formatting limits.

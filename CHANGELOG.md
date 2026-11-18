@@ -4,7 +4,7 @@
 
 - Restore blank lines between patch-note paragraphs, section labels and list entries, including nested bullets. Preserve explicit blank lines and HTML breaks while limiting consecutive breaks to two.
 - Add the complete November 4 announcement and October 14 reference fixtures to verify readable spacing without losing content, with existing Discord limits and notification safeguards retained.
-- Recover and include the ESP32 firmware, pinned build settings, trusted CA roots, USB management helper and native formatter/history tests in this repository. Apply the same paragraph spacing to ESP output while preserving its NVS configuration and history.
+- Include the ESP32 firmware, pinned build settings, trusted CA roots, USB management helper and native formatter/history tests in this repository. Apply the same paragraph spacing to ESP output while preserving its NVS configuration and history.
 
 ## 1.1.0 — 2026-10-27
 
@@ -13,7 +13,7 @@
 - Quietly baseline the current feed on every process start, including existing-history restarts, for manual switching between hosts. Announcements published during downtime are deliberately skipped; subsequent new announcements are delivered.
 - Preserve pending-delivery review, receipts, duplicate tracking, validated Steam redirects and container isolation guidance.
 - Add the complete October 23 announcement fixture and regression tests for every paragraph/bullet, continuation limits, mention safety, startup baselines and rejection without state changes.
-- Clarify manual stale-lock recovery and the separate hypervisor, Docker and bot startup layers. No automatic stale-lock deletion is introduced.
+- Clarify manual stale-lock recovery and startup requirements for the host, Docker and bot. No automatic stale-lock deletion is introduced.
 
 ## 1.0.1 — 2026-10-10
 
