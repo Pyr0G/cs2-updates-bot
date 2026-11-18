@@ -10,7 +10,9 @@ The server update is running with its previous delivery history intact, no pendi
 
 The previous ESP32 source was recovered from saved work history and is now included in `firmware/`, with pinned build settings, TLS trust roots and USB management tools. The firmware builds successfully and was uploaded with flash hash verification, retaining the existing NVS configuration and checkpoint. The embedded trust store contains five roots present in Certifi 2026.7.22; provenance and licensing are included. A private settings backup was retained before upload. No historical Discord announcement was replayed or edited for this update.
 
-The actual device's non-posting November 4 preview exactly matches the server formatter: 1,442 UTF-8 description bytes, 23 separated blocks and 21 bullets. Wi-Fi, clock synchronization and Discord identity/destination/role permissions passed. The checkpoint remained unchanged, with no pending delivery. ESP was left in current-session standby with automatic posting armed for the next power-up while the server runs. A genuine future Discord delivery and a full host power-cycle remain untested for this release.
+The actual device's non-posting November 4 preview exactly matches the server formatter: 1,442 UTF-8 description bytes, 23 separated blocks and 21 bullets. Wi-Fi, clock synchronization and Discord identity/destination/role permissions passed. The checkpoint remained unchanged, with no pending delivery. At deployment, ESP was left in current-session standby with automatic posting armed for the next power-up while the server ran.
+
+On 2026-11-18, the operator confirmed that both the Docker deployment and ESP32 microcontroller implementation successfully sent correctly formatted messages to the Discord channel. The operator also confirmed that both the Docker host and ESP32 microcontroller were fully power-cycled and their bots started automatically afterward. Live Discord delivery, message formatting and automatic startup after a full power cycle are therefore validated for both implementations based on operator confirmation.
 
 ## Version 1.1.0 — 2026-10-27
 
